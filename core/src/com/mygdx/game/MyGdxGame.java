@@ -13,6 +13,9 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import static com.badlogic.gdx.math.MathUtils.random;
 import static java.lang.Thread.sleep;
 
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 public class MyGdxGame extends ApplicationAdapter implements InputProcessor{
 	int rows=10;
 	int columns=6;
@@ -38,6 +41,9 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor{
 	int tempX,tempY;
 	ShapeRenderer shapeDraw;
 	GamePlayingAgent agent;
+	OpponentsAgent agent2;
+	
+	Random random = new Random();
 	
 	@Override
 	public void create () {
@@ -62,6 +68,7 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor{
 		ballBlueSprite[2]= new Sprite(ballBlueTexture[2]);
 		shapeDraw = new ShapeRenderer();
 		agent= new GamePlayingAgent(rows, columns, playerBot);
+		agent2 = new OpponentsAgent(rows, columns, playerBot);
 		cellWidth=(screenWidth-margin*2)/columns;
 		cellHeight=(screenHeight-margin*2)/rows;
 
@@ -74,6 +81,7 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor{
 
 	@Override
 	public void render () {
+		
 		Gdx.gl.glClearColor(1, 0, 1, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.begin();
@@ -243,8 +251,12 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor{
 		if(X>=0 && Y>=0 && X<columns && Y<rows) {	//If touch is within the boundary
 			if(cells[Y][X].player!=0 && getCurrentPlayer()!=cells[Y][X].player)
 			{
+				System.out.println("Calling from here");
 				if(getCurrentPlayer()==playerBot)
-					makeIntelligentMove();
+					makeIntelligentMove1();
+				if(getCurrentPlayer()==1)	
+					makeIntelligentMove2();
+				
 				return true;	//If another player has played on a cell before, don't let this player place his ball here
 			}
 			cells[Y][X].no_of_balls++;
@@ -265,21 +277,37 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor{
 		playersToBeSwapped=0;
 		if(player==playerBot)
 		{
-			makeIntelligentMove();
+			makeIntelligentMove1();
 		}
+		if(player==1)
+			makeIntelligentMove2();
+	
 		System.out.println();
 		System.out.println();
-		System.out.println();
-		System.out.println();
+
 	}
 
-	private void makeIntelligentMove() {
+	private void makeIntelligentMove1() {
+	
 		agent.setGridContent(cells);
-		agent.intelligentMove(getCurrentPlayer());
+		agent. intelligentMove(getCurrentPlayer());
 		int x = agent.getX();
 		int y = agent.getY();
+		System.out.println("Placing move for player blue at ["+y+","+x+"]");
 		placeMove(x,y);
 	}
+	
+	private void makeIntelligentMove2() {
+
+		System.out.println("Calling opponent");
+		agent2.setGridContent(cells);
+		agent2.intelligentMove(getCurrentPlayer());
+		int x = agent2.getX();
+		int y = agent2.getY();
+		System.out.println("Placing move for player red at ["+y+","+x+"]");
+		placeMove(x,y);
+		}
+		
 
 	private int criticalMass(int tempX, int tempY) {
 		int mass=2;
@@ -310,7 +338,7 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor{
 			cells[tempY][tempX].moveUp=1;
 		}
 		//Checking if any player is won
-		System.out.println("Checking Status...");
+		//System.out.println("Checking Status...");
 		checkStatus();
 	}
 	private void putLock()
@@ -355,7 +383,7 @@ public class MyGdxGame extends ApplicationAdapter implements InputProcessor{
 				if(cells[i][j].player==opponent)
 					isWon = false;
 			}
-		System.out.println("...flag is"+isWon);
+		//System.out.println("...flag is"+isWon);
 		if(isWon)
 			Won();
 	}
